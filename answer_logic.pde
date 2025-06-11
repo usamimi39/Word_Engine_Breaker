@@ -1,7 +1,5 @@
-
-
 void checkAnswer() {
-  // 問題が表示されていない、または解答済みの場合は何もしない
+
   if (currentChoices.isEmpty()) {
     return;
   }
@@ -13,33 +11,51 @@ void checkAnswer() {
   }
 
 
-  // 1. ユーザーがファンで選んでいる単語を取得
+  // 選択中を判定
   String selectedAnswer = currentChoices.get(fanPosition);
 
-  // 2. 本当の正解の単語を取得
+  // 正解の単語を抽出
   String correctAnswer = wordSets[currentSetIndex][1];
 
-  // 3. ユーザーの選択と、記憶しておいた正解を比較
+  answeredPosition = fanPosition;
+
+
+  PVector wandEffectPosition = getWandPosition();
+  int wandParticles = 100;
+  color wandEffectColor = color(150, 200, 255);
+  PVector wandAcceleration = new PVector(0.05, 0);
+  for (int i = 0; i < wandParticles; i++) {
+
+    particles.add(new Particle(wandEffectPosition, wandEffectColor, wandAcceleration));
+  }
+
+
   if (selectedAnswer.equals(correctAnswer)) {
     lastAnswerWasCorrect = true;
+    gameState = 1;
+    correctAnswersCount++;
     println("正解！");
 
-    // エフェクトの発生位置 (キャラクターの中心座標)
-    PVector effectPosition = new PVector(1000, 450);
 
-    // たくさんのパーティクルを一度に生成してリストに追加する
-    int numberOfParticles = 150; // 発生させる数 (お好みで調整してください)
-    for (int i = 0; i < numberOfParticles; i++) {
-      particles.add(new Particle(effectPosition));
+    PVector characterEffectPosition = new PVector(1000, 450);
+    int characterParticles = 150;
+    color characterEffectColor = color(255, 255, 150);
+
+
+    PVector characterAcceleration = new PVector(0, 0.05);
+
+    for (int i = 0; i < characterParticles; i++) {
+
+      particles.add(new Particle(characterEffectPosition, characterEffectColor, characterAcceleration));
     }
   } else {
     lastAnswerWasCorrect = false;
     println("不正解...");
   }
 
-  // どの位置で答えたか記憶する
+
   answeredPosition = fanPosition;
 
-  // ゲームの状態を「結果表示中」に変更する
+
   gameState = 1;
 }

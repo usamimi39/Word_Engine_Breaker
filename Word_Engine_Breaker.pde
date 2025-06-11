@@ -12,15 +12,15 @@ void setup() {
 
   fanImage = loadImage("mode_fan.png");
 
+  //basezundaを読み込む
   basezunda = loadImage("basezunda.png");
   if (basezunda != null) {
     basezunda.resize(300, 0);
   }
 
-  // 明るい表情のキャラクター画像を読み込む
+  //happyzunda読み込む
   happyzunda = loadImage("happyzunda.png");
 
-  // ★★★ このデバッグ用の行を追加・確認してください ★★★
   println("happyzunda変数の状態: " + happyzunda);
 
   if (happyzunda != null) {
@@ -39,11 +39,17 @@ void setup() {
 
 
 void draw() {
-  // 1. 背景と静的な土台を描画
+  // 背景と静的な土台を描画
   background(240);
+  //上部バナー
   fill(24, 58, 137);
   noStroke();
   rect(0, 0, 1200, 40);
+
+  textSize(30);
+  fill(255);
+  text("着せ替えWord Engine", 600, 18);
+
   fill(255);
   noStroke();
   // 中央白い枠
@@ -58,11 +64,11 @@ void draw() {
   for (int i = particles.size() - 1; i >= 0; i--) {
     // リストからi番目のパーティクルを取り出す
     Particle p = particles.get(i);
-    // 状態を更新する (位置を動かす、寿命を減らすなど)
+
     p.update();
-    // 画面に描画する
+
     p.display();
-    // もし寿命が尽きていたら、リストから削除する
+
     if (p.isDead()) {
       particles.remove(i);
     }
@@ -75,14 +81,14 @@ void draw() {
 }
 
 void keyPressed() {
-  // --- 上下キーによるファン操作 ---
+  //ステッキがfanなのはもともとファンの風邪で吹き飛ばすという設計だった名残
   if (keyCode == UP) {
     fanPosition = max(0, fanPosition - 1);
   } else if (keyCode == DOWN) {
     fanPosition = min(2, fanPosition + 1);
   }
 
-  // --- スペースキーが押されたときの処理を整理 ---
+
   if (key == ' ') {
     // 最初の問題を開始する
     if (currentSetIndex == -1) {
@@ -90,28 +96,24 @@ void keyPressed() {
       return;
     }
 
-    // ゲームの状態に応じて処理を分岐
-    if (gameState == 0) { // 「解答中」なら...
+    if (gameState == 0) { // 「解答中」
       checkAnswer();
-    } else if (gameState == 1) { // 「結果表示中」なら...
+    } else if (gameState == 1) { // 「結果表示中」
       if (lastAnswerWasCorrect) {
-        // 正解だったので、正解数を1増やす
-        correctAnswersCount++;
 
-        // 次の問題を準備する (この中でgameStateが2になる可能性がある)
+
         prepareNewQuizSet();
 
-        // ★★★ ここを修正 ★★★
-        // もし、ゲームが終了状態(2)になっていなければ、gameStateを0に戻す
+
         if (gameState != 2) {
           gameState = 0;
         }
       } else {
-        // 不正解だったので、解答中に戻るだけ
+
         gameState = 0;
       }
-    } else if (gameState == 2) { // 「全問終了」なら...
-      println("クイズは終了しました。");
+    } else if (gameState == 2) {
+      println("クイズ終了");
     }
   }
 }
@@ -121,30 +123,27 @@ void drawCharacterAndItems() {
   float charX = 1000;
   float charY = 450;
 
-  if (gameState == 2) { // 「全問終了」状態の場合
-    // 明るい表情のキャラクターを描画
-    if (happyzunda != null) {
+  // ベースキャラ描写
+  if (gameState == 2) {
+    if (happyzunda!= null) {
       image(happyzunda, charX, charY);
     }
-  } else { // まだクイズが続いている場合
-    // 通常の表情のキャラクターを描画
+  } else {
     if (basezunda != null) {
       image(basezunda, charX, charY);
     }
   }
 
 
-
-  // 1. 正解数に応じて、アイテムを重ねて描画 (この部分は変更なし)
   int correctCount = correctAnswersCount;
+
   for (int i = 0; i < correctCount; i++) {
     if (clothes[i] != null) {
+
       image(clothes[i], charX, charY);
     }
   }
 }
-
-
 
 
 
@@ -169,22 +168,31 @@ void drawQuizUI() {
 }
 
 void drawFan() {
-  float fanX = 200;
-  float fanY;
-  float fanWidth = 60;
-  float fanHeight = 60;
+  //座標取得
+  PVector wandPos = getWandPosition();
 
-  if (fanPosition == 0) { // 上
-    fanY = 310;
-  } else if (fanPosition == 2) { // 下
-    fanY = 510;
-  } else { // 中央
-    fanY = 410;
-  }
+  float fanWidth = 140;
+  float fanHeight =140;
 
   if (fanImage != null) {
-    image(fanImage, fanX, fanY, fanWidth, fanHeight);
+    image(fanImage, wandPos.x, wandPos.y, fanWidth, fanHeight);
   }
+}
+
+PVector getWandPosition() {
+  float wandX = 200;
+  float wandY;
+
+  if (fanPosition == 0) { // 上
+    wandY = 310;
+  } else if (fanPosition == 2) { // 下
+    wandY = 510;
+  } else { // 中央
+    wandY = 410;
+  }
+
+
+  return new PVector(wandX, wandY);
 }
 
 //OX判定
