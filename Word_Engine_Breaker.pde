@@ -1,26 +1,43 @@
-// ==========================================================
-// Word_Engine_Breaker.pde の全コード
-// ==========================================================
-
-
-// --- setup()関数 : プログラム実行時に一度だけ呼ばれる ---
 void setup() {
   size(1200, 800);
-  smooth(); // 描画を滑らかにする
+  smooth();
   PFont font = createFont("Meiryo", 24);
   textFont(font);
   textAlign(CENTER, CENTER);
-  imageMode(CENTER); // 画像を中央基準で配置する設定
+  imageMode(CENTER);
 
-  // グローバル変数の初期化 (ArrayList)
   displayedSetIndices = new ArrayList<Integer>();
-  
-  // 画像をdataフォルダから読み込む
+
+  particles = new ArrayList<Particle>();
+
   fanImage = loadImage("mode_fan.png");
+
+  basezunda = loadImage("basezunda.png");
+  if (basezunda != null) {
+    basezunda.resize(300, 0);
+  }
+
+  // 明るい表情のキャラクター画像を読み込む
+  happyzunda = loadImage("happyzunda.png");
+
+  // ★★★ このデバッグ用の行を追加・確認してください ★★★
+  println("happyzunda変数の状態: " + happyzunda);
+
+  if (happyzunda != null) {
+    happyzunda.resize(300, 0);
+  }
+
+  for (int i = 0; i < clothes.length; i++) {
+    String filename = "item_0" + (i + 1) + ".png";
+    clothes[i] = loadImage(filename);
+    if (clothes[i] != null) {
+      clothes[i].resize(300, 0);
+    }
+  }
 }
 
 
-// --- draw()関数 : 毎フレーム呼び出され、画面全体を描画する司令塔 ---
+
 void draw() {
   // 1. 背景と静的な土台を描画
   background(240);
@@ -29,74 +46,120 @@ void draw() {
   rect(0, 0, 1200, 40);
   fill(255);
   noStroke();
-  // 中央の白い背景 (サイズは適宜調整してください)
+  // 中央白い枠
   rect(400, 250, 400, 600);
 
-  // 2. クイズ画面（お題、レンガ、選択肢）を描画
+  drawCharacterAndItems();
+
   drawQuizUI();
 
-  // 3. ファンの描画
   drawFan();
 
-  // 4. もし「結果表示中」なら、判定結果(◯✕)を重ねて描画
+  for (int i = particles.size() - 1; i >= 0; i--) {
+    // リストからi番目のパーティクルを取り出す
+    Particle p = particles.get(i);
+    // 状態を更新する (位置を動かす、寿命を減らすなど)
+    p.update();
+    // 画面に描画する
+    p.display();
+    // もし寿命が尽きていたら、リストから削除する
+    if (p.isDead()) {
+      particles.remove(i);
+    }
+  }
+
+  // 表示内容の判定
   if (gameState == 1) {
     drawFeedback();
   }
 }
 
-
-// --- keyPressed()関数 : キーが押されたときに呼ばれる ---
 void keyPressed() {
-if (keyCode == UP) {
+  // --- 上下キーによるファン操作 ---
+  if (keyCode == UP) {
     fanPosition = max(0, fanPosition - 1);
   } else if (keyCode == DOWN) {
     fanPosition = min(2, fanPosition + 1);
   }
 
-  // --- スペースキーが押されたときの処理を、gameStateに応じて分岐 ---
+  // --- スペースキーが押されたときの処理を整理 ---
   if (key == ' ') {
+    // 最初の問題を開始する
+    if (currentSetIndex == -1) {
+      prepareNewQuizSet();
+      return;
+    }
+
+    // ゲームの状態に応じて処理を分岐
     if (gameState == 0) { // 「解答中」なら...
-      checkAnswer(); // 答えを判定する
-      
+      checkAnswer();
     } else if (gameState == 1) { // 「結果表示中」なら...
       if (lastAnswerWasCorrect) {
-        // 正解だったので、次の問題に進む
+        // 正解だったので、正解数を1増やす
+        correctAnswersCount++;
+
+        // 次の問題を準備する (この中でgameStateが2になる可能性がある)
         prepareNewQuizSet();
-        gameState = 0;
+
+        // ★★★ ここを修正 ★★★
+        // もし、ゲームが終了状態(2)になっていなければ、gameStateを0に戻す
+        if (gameState != 2) {
+          gameState = 0;
+        }
       } else {
         // 不正解だったので、解答中に戻るだけ
         gameState = 0;
       }
-      
     } else if (gameState == 2) { // 「全問終了」なら...
-      // 何もしない (クラッシュを防ぐ)
-      // もしゲームをリセットしたくなったら、ここにその処理を書きます
       println("クイズは終了しました。");
     }
-  }
-
-  // 最初の問題を開始する処理 (変更なし)
-  if (key == ' ' && currentSetIndex == -1 && gameState == 0) {
-    prepareNewQuizSet();
   }
 }
 
 
-// ==========================================================
-// 以下は、draw()関数を補助するヘルパー関数です
-// ==========================================================
+void drawCharacterAndItems() {
+  float charX = 1000;
+  float charY = 450;
 
-// --- クイズのUI（お題、レンガ、選択肢）を描画する関数 ---
+  if (gameState == 2) { // 「全問終了」状態の場合
+    // 明るい表情のキャラクターを描画
+    if (happyzunda != null) {
+      image(happyzunda, charX, charY);
+    }
+  } else { // まだクイズが続いている場合
+    // 通常の表情のキャラクターを描画
+    if (basezunda != null) {
+      image(basezunda, charX, charY);
+    }
+  }
+
+
+
+  // 1. 正解数に応じて、アイテムを重ねて描画 (この部分は変更なし)
+  int correctCount = correctAnswersCount;
+  for (int i = 0; i < correctCount; i++) {
+    if (clothes[i] != null) {
+      image(clothes[i], charX, charY);
+    }
+  }
+}
+
+
+
+
+
+
+//クイズUI
 void drawQuizUI() {
-  showBricks(); 
+  showBricks();
 
-  // お題を表示
+  // 問題
   fill(0);
   textSize(38);
   textAlign(CENTER, CENTER);
   text(currentQuestion, 600, 120);
 
-  // 選択肢を表示
+  // 選択肢
   if (currentChoices.size() == 3) {
     textSize(30);
     text(currentChoices.get(0), 600, 310);
@@ -105,7 +168,6 @@ void drawQuizUI() {
   }
 }
 
-// --- ファンを描画する関数 ---
 void drawFan() {
   float fanX = 200;
   float fanY;
@@ -119,41 +181,33 @@ void drawFan() {
   } else { // 中央
     fanY = 410;
   }
-  
+
   if (fanImage != null) {
     image(fanImage, fanX, fanY, fanWidth, fanHeight);
   }
 }
 
-// --- 正解・不正解のフィードバック(◯✕)を描画する関数 ---
+//OX判定
 void drawFeedback() {
-  // ... (◯や✕を描画する部分は変更なし) ...
+
   float feedbackY;
-  if (answeredPosition == 0) { feedbackY = 310; } 
-  else if (answeredPosition == 2) { feedbackY = 510; } 
-  else { feedbackY = 410; }
-  float feedbackX = 780 - 40; 
-  if (lastAnswerWasCorrect) {
-    strokeWeight(5); stroke(0, 200, 100); noFill();
-    circle(feedbackX, feedbackY, 40); 
+  if (answeredPosition == 0) {
+    feedbackY = 310;
+  } else if (answeredPosition == 2) {
+    feedbackY = 510;
   } else {
-    strokeWeight(5); stroke(220, 50, 50);
+    feedbackY = 410;
+  }
+  float feedbackX = 780 - 40;
+  if (lastAnswerWasCorrect) {
+    strokeWeight(5);
+    stroke(0, 200, 100);
+    noFill();
+    circle(feedbackX, feedbackY, 40);
+  } else {
+    strokeWeight(5);
+    stroke(220, 50, 50);
     line(feedbackX - 15, feedbackY - 15, feedbackX + 15, feedbackY + 15);
     line(feedbackX + 15, feedbackY - 15, feedbackX - 15, feedbackY + 15);
   }
-  
-  // ★★★ 次に進むためのメッセージ表示を、状況に応じて変更 ★★★
-  String message;
-  if (lastAnswerWasCorrect) {
-    message = "正解！ スペースキーを押して次の問題へ";
-  } else {
-    message = "不正解！ なにかキーを押して再挑戦";
-  }
-  
-  fill(0);
-  noStroke();
-  textSize(28);
-  textAlign(CENTER, CENTER);
-  text(message, 600, height - 80);
 }
-  
