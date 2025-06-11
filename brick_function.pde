@@ -12,11 +12,10 @@ void showBricks() {
 void prepareNewQuizSet() {
   answeredPosition = -1;
 
-  // 1. 全ての問題が出題済みかどうかをチェック
   if (displayedSetIndices.size() >= wordSets.length) {
-    currentQuestion = "全ての問題が出題されました！";
+    currentQuestion = "全問正解！";
     currentChoices.clear();
-    gameState = 2; // ★変更: 状態を「全問終了」にする
+    gameState = 2;
     return;
   }
 

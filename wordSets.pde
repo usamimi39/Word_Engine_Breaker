@@ -3,11 +3,16 @@ String[][]wordSets = {
   {"りんご", "Apple", "Book", "Water"},
   {"犬", "Dog", "Cloud", "Music"},
   {"走る", "Run", "Sleep", "Chair"},
+  {"太陽", "Sun", "Moon", "Star"},
+  {"猫", "Cat", "Fish", "Tree"},
+  {"雪", "Snow", "Spring", "Summer"},
+  {"書く", "Write", "Read", "Listen"},
+  {"大きい", "Big", "Small", "Happy"}
 };
 
 PImage basezunda;
 PImage happyzunda;
-PImage[]clothes = new PImage[3];
+PImage[]clothes = new PImage[8];
 
 ArrayList<Integer> displayedSetIndices;
 
@@ -20,9 +25,9 @@ int fanPosition = 1;
 int correctAnswersCount = 0;
 
 
-String currentQuestion = "スペースキーを押してクイズを開始！";
+String currentQuestion = "スペースキーでスタート！";
 ArrayList<String> currentChoices = new ArrayList<String>();
-int currentSetIndex = -1; // 現在の問題セットのインデックス
+int currentSetIndex = -1;
 
 
 String currentCorrectAnswer;
